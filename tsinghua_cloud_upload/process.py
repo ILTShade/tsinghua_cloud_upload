@@ -6,7 +6,7 @@ import subprocess
 import click
 
 # 设定在最开始目录下存在一个repo_config.ini文件，用来记录每个仓库的上传链接
-REPO_CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'repo_config.json')
+REPO_CONFIG_PATH = os.path.join(os.environ['HOME'], '.thc_upload')
 BASE_URL = 'https://cloud.tsinghua.edu.cn'
 @click.command()
 @click.option('--repo_name', type=click.STRING, required=True, help='the repo name in that you want to upload file')
@@ -15,9 +15,21 @@ def main(repo_name, file_name):
     '''
     upload file to target repo
     '''
+    # check repo config path
+    if not os.path.exists(REPO_CONFIG_PATH):
+        os.mkdir(REPO_CONFIG_PATH)
+        print(f'mkdir {REPO_CONFIG_PATH} for saving config_file')
+    REPO_CONFIG_FILE = os.path.join(REPO_CONFIG_PATH, 'repo_config.json')
+    if not os.path.exists(REPO_CONFIG_FILE):
+        open(REPO_CONFIG_FILE, 'w').close()
+        print(f'generate empty file {REPO_CONFIG_FILE} for saving config')
     # load repo list from the json file
     with open(REPO_CONFIG_FILE, 'r') as f:
-        repo_config_dict = json.load(f)
+        try:
+            repo_config_dict = json.load(f)
+        except:
+            print(f'{REPO_CONFIG_FILE} is empty or something else')
+            return 0
     assert len(repo_config_dict.keys()) > 0, f'no repo_config in {REPO_CONFIG_FILE}'
     # test if repo name in repo_config_list
     if repo_name in repo_config_dict:
