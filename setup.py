@@ -10,7 +10,7 @@ with open("README.md", "r") as f:
 
 setup(
     name = "thc_upload",
-    version = "0.0.1",
+    version = "1.0.0",
     author = "Hanbo Sun",
     author_email = "sun-hb17@mails.tsinghua.edu.cn",
     description = "A tool to upload file to tsinghua cloud in terminal",
