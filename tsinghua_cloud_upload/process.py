@@ -71,7 +71,7 @@ def main(repo_name, file_name):
     abs_file_path = os.path.abspath(file_name)
     base_file_name = os.path.basename(file_name)
     # upload file
-    command = f'curl {upload_url} -F file=@{abs_file_path} -F filename={base_file_name} -F parent_dir="/" -s'
+    command = f'curl {upload_url} -F file=@{abs_file_path} -F filename={base_file_name} -F parent_dir="/"'
     print(f'upload file using {command}')
     result = subprocess.check_output([command], shell=True).decode()
     print(result)
