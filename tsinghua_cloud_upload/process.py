@@ -67,14 +67,25 @@ def main(mode, repo_name, operate_name):
                 print(f'{k}: {v}')
             raise Exception(f'however, {repo_name} DOES NOT in repo_config_dict')
         # 查找返回的链接
-        result = subprocess.check_output(['curl', repo_url, '-s']).decode().split('\n')
-        result = list(filter(lambda x:('ajax/u/d' in x), result))
-        assert len(result) == 1, f'something error happend in curl {repo_url}'
-        res = re.search("^\s*url: '(?P<url>.+)',$", result[0])
-        intermediate_url = res.groupdict()['url']
+        response = subprocess.check_output(['curl', repo_url, '-s']).decode().split('\n')
+        # there can be possibly two kind of response
+        # for the first kind, start with ajax
+        result = list(filter(lambda x:('ajax/u/d' in x), response))
+        if len(result) == 1:
+            pattern = re.compile(r"\?r=(?P<url>[-\w]+)")
+        else:
+            # for the second kind, start with repoID
+            result = list(filter(lambda x:('repoID' in x), response))
+            if len(result) == 1:
+                pattern = re.compile(r"repoID: \"(?P<url>[-\w]+)\"")
+            else:
+                assert 0, f"something error happened in curl {repo_url}"
+        # construct upload url
+        res = pattern.search(result[0])
         SUFFIX = "-H 'Accept: application/json' -H 'X-Requested-With: XMLHttpRequest'"
         # get upload url
-        command = f'curl {BASE_URL}{intermediate_url} {SUFFIX} -s'
+        command = f"curl {repo_url.replace('/u/d', '/ajax/u/d')}" + \
+            f"upload/?r={res.groupdict()['url']} {SUFFIX} -s"
         print(f'get upload url using {command}')
         result = subprocess.check_output([command], shell=True).decode().split('\n')[0]
         upload_url = json.loads(result)['url']
@@ -84,5 +95,9 @@ def main(mode, repo_name, operate_name):
         # upload file
         command = f'curl {upload_url} -F file=@{abs_file_path} -F filename={base_file_name} -F parent_dir="/"'
         print(f'upload file using {command}')
-        result = subprocess.check_output([command], shell=True).decode()
-        print(result)
+        output = subprocess.check_output([command], shell=True).decode()
+        print(output)
+
+if __name__ == "__main__":
+    # only for debug
+    main()
